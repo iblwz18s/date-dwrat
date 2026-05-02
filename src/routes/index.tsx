@@ -382,12 +382,12 @@ function CourseFields({ course }: { course: CourseEvent }) {
     <dl className="space-y-2 text-sm">
       <Field label="العنوان" value={course.title} highlight />
       <div className="grid grid-cols-2 gap-2">
-        <Field label="التاريخ" value={course.date} />
-        <Field label="الوقت" value={`${course.startTime} - ${course.endTime}`} />
+        <Field label="التاريخ" value={course.date} icon={<CalendarIcon className="h-3.5 w-3.5" />} />
+        <Field label="الوقت" value={`${course.startTime} - ${course.endTime}`} icon={<Clock className="h-3.5 w-3.5" />} />
       </div>
-      {course.organizer && <Field label="الجهة المنظمة" value={course.organizer} />}
-      {course.location && <Field label="الموقع" value={course.location} />}
-      {course.description && <Field label="الوصف" value={course.description} />}
+      {course.organizer && <Field label="الجهة المنظمة" value={course.organizer} icon={<Building2 className="h-3.5 w-3.5" />} />}
+      {course.location && <Field label="الموقع" value={course.location} icon={<MapPin className="h-3.5 w-3.5" />} />}
+      {course.description && <Field label="الوصف" value={course.description} icon={<AlignLeft className="h-3.5 w-3.5" />} />}
     </dl>
   );
 }
@@ -396,15 +396,18 @@ function Field({
   label,
   value,
   highlight,
+  icon,
 }: {
   label: string;
   value: string;
   highlight?: boolean;
+  icon?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card/60 p-3">
-      <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
+    <div className="rounded-xl border border-border bg-card/60 p-3">
+      <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {icon}
+        <span>{label}</span>
       </dt>
       <dd className={`mt-1 ${highlight ? "text-base font-bold" : "text-sm"} text-foreground`}>
         {value}
@@ -427,7 +430,7 @@ function SavedList({
   if (courses.length === 0) return null;
   return (
     <section className="mt-12">
-      <h2 className="mb-4 text-xl font-bold">الدورات المحفوظة</h2>
+      <h2 className="font-display mb-4 text-2xl font-bold">الدورات المحفوظة</h2>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {courses.map((c) => (
           <article
@@ -446,29 +449,39 @@ function SavedList({
             <div className="space-y-2 p-4">
               <h3 className="line-clamp-2 font-bold">{c.title}</h3>
               {c.organizer && (
-                <p className="text-xs text-muted-foreground">{c.organizer}</p>
+                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Building2 className="h-3 w-3" />
+                  {c.organizer}
+                </p>
               )}
-              <p className="text-xs text-muted-foreground">
-                📅 {c.date} • {c.startTime}
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CalendarIcon className="h-3 w-3" />
+                {c.date}
+                <span className="opacity-50">•</span>
+                <Clock className="h-3 w-3" />
+                {c.startTime}
               </p>
               <div className="flex flex-wrap gap-2 pt-2">
                 <button
                   onClick={() => onAddToCalendar(c)}
-                  className="flex-1 rounded-lg bg-gradient-primary px-3 py-2 text-xs font-bold text-primary-foreground"
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gradient-primary px-3 py-2 text-xs font-bold text-primary-foreground"
                 >
+                  <CalendarPlus className="h-3.5 w-3.5" />
                   إضافة للتقويم
                 </button>
                 <button
                   onClick={() => onView(c)}
-                  className="rounded-lg border border-border bg-card px-3 py-2 text-xs hover:bg-muted"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs hover:bg-muted"
+                  aria-label="عرض"
                 >
-                  عرض
+                  <Eye className="h-3.5 w-3.5" />
                 </button>
                 <button
                   onClick={() => onDelete(c.id)}
-                  className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive hover:bg-destructive/20"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive hover:bg-destructive/20"
+                  aria-label="حذف"
                 >
-                  حذف
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
@@ -494,7 +507,7 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
           className="absolute left-4 top-4 rounded-full border border-border bg-background p-2 text-muted-foreground hover:bg-muted"
           aria-label="إغلاق"
         >
-          ✕
+          <X className="h-4 w-4" />
         </button>
         {children}
       </div>
@@ -524,18 +537,20 @@ function CourseDetails({
       <div className="flex flex-wrap gap-2 pt-2">
         <button
           onClick={onAddToCalendar}
-          className="flex-1 rounded-xl bg-gradient-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-elegant"
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-elegant"
         >
-          📅 إضافة إلى التقويم
+          <CalendarPlus className="h-4 w-4" />
+          إضافة إلى التقويم
         </button>
         {course.registrationUrl && (
           <a
             href={course.registrationUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-xl border border-accent/40 bg-accent/10 px-4 py-3 text-sm font-medium hover:bg-accent/20"
+            className="inline-flex items-center gap-2 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3 text-sm font-medium hover:bg-accent/20"
           >
-            🔗 رابط التسجيل
+            <ExternalLink className="h-4 w-4" />
+            رابط التسجيل
           </a>
         )}
       </div>
