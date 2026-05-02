@@ -122,6 +122,18 @@ export const extractCourseData = createServerFn({ method: "POST" })
       const imageUrl = `data:${data.mimeType};base64,${data.imageBase64}`;
       const errors: string[] = [];
 
+      if (geminiApiKey) {
+        const directGeminiResult = await extractWithGeminiDirect(
+          geminiApiKey,
+          data.imageBase64,
+          data.mimeType,
+          `${systemPrompt}\n\n${userPrompt}`,
+        );
+        if (directGeminiResult) {
+          return { ok: true as const, data: directGeminiResult };
+        }
+      }
+
       for (const model of apiKey ? FREE_VISION_MODELS : []) {
         const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
@@ -168,22 +180,10 @@ export const extractCourseData = createServerFn({ method: "POST" })
         errors.push(`${model}: empty response`);
       }
 
-      if (geminiApiKey) {
-        const directGeminiResult = await extractWithGeminiDirect(
-          geminiApiKey,
-          data.imageBase64,
-          data.mimeType,
-          `${systemPrompt}\n\n${userPrompt}`,
-        );
-        if (directGeminiResult) {
-          return { ok: true as const, data: directGeminiResult };
-        }
-      }
-
-      console.error("OpenRouter extraction failed for all models:", errors);
+      console.error("AI extraction failed for all providers:", errors);
       return {
         ok: false as const,
-        error: "تعذّر استخراج البيانات عبر النماذج المجانية حالياً. حاول بصورة أوضح أو بعد قليل.",
+        error: "تعذّر استخراج البيانات عبر الخدمات المجانية حالياً. حاول بصورة أوضح أو بعد قليل.",
       };
     } catch (err) {
       console.error("extractCourseData error:", err);
