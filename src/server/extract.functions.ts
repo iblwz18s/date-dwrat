@@ -20,9 +20,9 @@ export interface ExtractedCourseFields {
 type ExtractResult = { ok: true; data: ExtractedCourseFields } | { ok: false; error: string };
 
 const FREE_VISION_MODELS = [
-  "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
   "google/gemma-4-26b-a4b-it:free",
   "google/gemma-4-31b-it:free",
+  "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
   "nvidia/nemotron-nano-12b-v2-vl:free",
   "google/gemma-3-12b-it:free",
   "baidu/qianfan-ocr-fast:free",
@@ -122,18 +122,6 @@ export const extractCourseData = createServerFn({ method: "POST" })
       const imageUrl = `data:${data.mimeType};base64,${data.imageBase64}`;
       const errors: string[] = [];
 
-      if (geminiApiKey) {
-        const directGeminiResult = await extractWithGeminiDirect(
-          geminiApiKey,
-          data.imageBase64,
-          data.mimeType,
-          `${systemPrompt}\n\n${userPrompt}`,
-        );
-        if (directGeminiResult) {
-          return { ok: true as const, data: directGeminiResult };
-        }
-      }
-
       for (const model of apiKey ? FREE_VISION_MODELS : []) {
         const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
@@ -178,6 +166,18 @@ export const extractCourseData = createServerFn({ method: "POST" })
           return { ok: true as const, data: parsed };
         }
         errors.push(`${model}: empty response`);
+      }
+
+      if (geminiApiKey) {
+        const directGeminiResult = await extractWithGeminiDirect(
+          geminiApiKey,
+          data.imageBase64,
+          data.mimeType,
+          `${systemPrompt}\n\n${userPrompt}`,
+        );
+        if (directGeminiResult) {
+          return { ok: true as const, data: directGeminiResult };
+        }
       }
 
       console.error("AI extraction failed for all providers:", errors);
