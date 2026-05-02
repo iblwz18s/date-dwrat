@@ -130,12 +130,11 @@ function Index() {
     await refreshSaved();
   };
 
-  const handleAddToCalendar = (ev: CourseEvent) => {
-    const url = buildGoogleCalendarUrl(ev);
-    if (isMobileDevice()) {
-      // على الجوال: نزّل ملف ICS ليُفتح في تقويم الجهاز
+  const handleAddToCalendar = (ev: CourseEvent, type: "google" | "device" = "google") => {
+    if (type === "device") {
       downloadIcs(ev);
     } else {
+      const url = buildGoogleCalendarUrl(ev);
       window.open(url, "_blank", "noopener,noreferrer");
     }
   };
