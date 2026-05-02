@@ -43,6 +43,12 @@ export const Route = createRootRoute({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "مستخرج بيانات الدورات الذكي" },
+      { name: "description", content: "Event Genie extracts event details from images and adds them to your calendar with reminders." },
+      { property: "og:description", content: "Event Genie extracts event details from images and adds them to your calendar with reminders." },
+      { name: "twitter:description", content: "Event Genie extracts event details from images and adds them to your calendar with reminders." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3659b3f9-7f31-485f-b97e-492798a26f8e/id-preview-8016e391--fd5edefa-2edd-4656-be72-5a7969810f53.lovable.app-1777753554560.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3659b3f9-7f31-485f-b97e-492798a26f8e/id-preview-8016e391--fd5edefa-2edd-4656-be72-5a7969810f53.lovable.app-1777753554560.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
