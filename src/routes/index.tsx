@@ -470,11 +470,20 @@ function SavedList({
               </p>
               <div className="flex flex-wrap gap-2 pt-2">
                 <button
-                  onClick={() => onAddToCalendar(c)}
+                  onClick={() => onAddToCalendar(c, "google")}
                   className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gradient-primary px-3 py-2 text-xs font-bold text-primary-foreground"
+                  aria-label="Google Calendar"
                 >
                   <CalendarPlus className="h-3.5 w-3.5" />
-                  إضافة للتقويم
+                  Google
+                </button>
+                <button
+                  onClick={() => onAddToCalendar(c, "device")}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-xs font-bold text-foreground hover:bg-primary/20"
+                  aria-label="تقويم الجهاز"
+                >
+                  <Smartphone className="h-3.5 w-3.5" />
+                  الجهاز
                 </button>
                 <button
                   onClick={() => onView(c)}
