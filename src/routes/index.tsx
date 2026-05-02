@@ -17,6 +17,7 @@ import {
   Building2,
   AlignLeft,
   Bell,
+  Smartphone,
 } from "lucide-react";
 import { extractCourseData } from "@/server/extract.functions";
 import { fileToBase64, scanQrFromImage } from "@/lib/qr";
