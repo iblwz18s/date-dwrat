@@ -179,7 +179,7 @@ function Index() {
             <CourseDetails
               course={viewing}
               imageDataUrl={viewing.imageDataUrl}
-              onAddToCalendar={() => handleAddToCalendar(viewing)}
+              onAddToCalendar={(type) => handleAddToCalendar(viewing, type)}
             />
           </Modal>
         )}
