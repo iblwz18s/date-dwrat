@@ -24,9 +24,9 @@ type ExtractResult =
 export const extractCourseData = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<ExtractResult> => {
-    const apiKey = process.env.LOVABLE_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return { ok: false as const, error: "LOVABLE_API_KEY غير مهيأ" };
+      return { ok: false as const, error: "GEMINI_API_KEY غير مهيأ" };
     }
 
     const systemPrompt = `أنت مساعد ذكي متخصص في استخراج بيانات الدورات التدريبية وورش العمل والمناقشات العلمية من صور الملصقات الإعلانية باللغة العربية والإنجليزية. استخرج البيانات بدقة وأرجعها بصيغة JSON فقط.`;
@@ -44,40 +44,34 @@ export const extractCourseData = createServerFn({ method: "POST" })
 أرجع JSON فقط بدون أي نص إضافي. استخدم null للحقول غير المتوفرة.`;
 
     try {
-      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: systemPrompt },
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [
             {
               role: "user",
-              content: [
-                { type: "text", text: userPrompt },
-                {
-                  type: "image_url",
-                  image_url: { url: `data:${data.mimeType};base64,${data.imageBase64}` },
-                },
+              parts: [
+                { text: userPrompt },
+                { inline_data: { mime_type: data.mimeType, data: data.imageBase64 } },
               ],
             },
           ],
-          response_format: { type: "json_object" },
+          generationConfig: { responseMimeType: "application/json" },
         }),
       });
 
       if (!res.ok) {
         const txt = await res.text();
-        if (res.status === 429) return { ok: false as const, error: "تم تجاوز الحد المسموح. حاول لاحقاً." };
-        if (res.status === 402) return { ok: false as const, error: "نفدت الأرصدة. يرجى إضافة رصيد." };
+        if (res.status === 429) return { ok: false as const, error: "تم تجاوز الحد المجاني اليومي. حاول غداً." };
         return { ok: false as const, error: `فشل الاستخراج (${res.status}): ${txt.slice(0, 200)}` };
       }
 
       const json = await res.json();
-      const content = json?.choices?.[0]?.message?.content ?? "{}";
+      const content =
+        json?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "{}";
       let parsed: ExtractedCourseFields = {};
       try {
         parsed = JSON.parse(content) as ExtractedCourseFields;
