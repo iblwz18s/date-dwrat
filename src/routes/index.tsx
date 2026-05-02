@@ -270,12 +270,8 @@ function UploadPanel({
           />
         ) : (
           <div className="flex flex-col items-center gap-3 p-6 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-primary text-primary-foreground shadow-elegant">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-primary text-primary-foreground shadow-elegant">
+              <UploadCloud className="h-7 w-7" />
             </div>
             <div className="text-sm font-medium">اسحب صورة الملصق هنا، أو انقر للاختيار</div>
             <div className="text-xs text-muted-foreground">JPG / PNG / WEBP</div>
@@ -300,7 +296,9 @@ function UploadPanel({
               <Spinner /> جاري الاستخراج...
             </>
           ) : (
-            <>✨ استخراج البيانات</>
+            <>
+              <Sparkles className="h-4 w-4" /> استخراج البيانات
+            </>
           )}
         </button>
         <button
@@ -336,8 +334,10 @@ function ResultPanel({
         </div>
       )}
       {!loading && !course && (
-        <div className="flex h-full min-h-[260px] flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
-          <div className="text-3xl">📋</div>
+        <div className="flex h-full min-h-[260px] flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-muted/40">
+            <ClipboardList className="h-6 w-6 text-muted-foreground" />
+          </div>
           <p>ستظهر تفاصيل الدورة هنا بعد الاستخراج</p>
         </div>
       )}
@@ -349,12 +349,14 @@ function ResultPanel({
               onClick={() => onAddToCalendar(course)}
               className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-elegant hover:opacity-95"
             >
-              📅 إضافة إلى التقويم
+              <CalendarPlus className="h-4 w-4" />
+              إضافة إلى التقويم
             </button>
             <button
               onClick={onSave}
-              className="rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium hover:bg-muted"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium hover:bg-muted"
             >
+              <Bookmark className="h-4 w-4" />
               حفظ
             </button>
             {course.registrationUrl && (
@@ -362,9 +364,10 @@ function ResultPanel({
                 href={course.registrationUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-xl border border-accent/40 bg-accent/10 px-4 py-3 text-sm font-medium text-accent-foreground hover:bg-accent/20"
+                className="inline-flex items-center gap-2 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3 text-sm font-medium text-accent-foreground hover:bg-accent/20"
               >
-                🔗 رابط التسجيل
+                <ExternalLink className="h-4 w-4" />
+                رابط التسجيل
               </a>
             )}
           </div>
