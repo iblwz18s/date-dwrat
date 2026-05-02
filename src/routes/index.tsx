@@ -201,8 +201,8 @@ function Header() {
         <Sparkles className="h-3.5 w-3.5 text-primary" />
         مدعوم بالذكاء الاصطناعي
       </div>
-      <h1 className="font-display mt-6 text-4xl font-black tracking-tight md:text-6xl">
-        <span className="bg-gradient-primary bg-clip-text text-transparent">
+      <h1 className="font-display mt-6 text-4xl font-black leading-[1.4] tracking-tight md:text-6xl md:leading-[1.3] pb-2">
+        <span className="bg-gradient-primary bg-clip-text text-transparent inline-block py-1">
           مستخرج بيانات الدورات الذكي
         </span>
       </h1>
