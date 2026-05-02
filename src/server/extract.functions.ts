@@ -78,12 +78,12 @@ export const extractCourseData = createServerFn({ method: "POST" })
 
       const json = await res.json();
       const content = json?.choices?.[0]?.message?.content ?? "{}";
-      let parsed: Record<string, unknown> = {};
+      let parsed: ExtractedCourseFields = {};
       try {
-        parsed = JSON.parse(content);
+        parsed = JSON.parse(content) as ExtractedCourseFields;
       } catch {
         const m = content.match(/\{[\s\S]*\}/);
-        if (m) parsed = JSON.parse(m[0]);
+        if (m) parsed = JSON.parse(m[0]) as ExtractedCourseFields;
       }
       return { ok: true as const, data: parsed };
     } catch (err) {
