@@ -6,9 +6,13 @@ const InputSchema = z.object({
   mimeType: z.string().default("image/jpeg"),
 });
 
+type ExtractResult =
+  | { ok: true; data: Record<string, unknown> }
+  | { ok: false; error: string };
+
 export const extractCourseData = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<ExtractResult> => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return { ok: false as const, error: "LOVABLE_API_KEY غير مهيأ" };
