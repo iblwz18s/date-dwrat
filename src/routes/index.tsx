@@ -322,7 +322,7 @@ function ResultPanel({
   loading: boolean;
   course: CourseEvent | null;
   onSave: () => void;
-  onAddToCalendar: (c: CourseEvent) => void;
+  onAddToCalendar: (c: CourseEvent, type?: "google" | "device") => void;
 }) {
   return (
     <div className="glass rounded-2xl border border-border p-5 shadow-soft">
