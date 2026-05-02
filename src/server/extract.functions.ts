@@ -67,10 +67,7 @@ async function extractWithGeminiDirect(
         contents: [
           {
             role: "user",
-            parts: [
-              { text: prompt },
-              { inlineData: { mimeType, data: imageBase64 } },
-            ],
+            parts: [{ text: prompt }, { inlineData: { mimeType, data: imageBase64 } }],
           },
         ],
         generationConfig: {
@@ -88,9 +85,10 @@ async function extractWithGeminiDirect(
   }
 
   const json = await res.json();
-  const content = json?.candidates?.[0]?.content?.parts
-    ?.map((part: { text?: string }) => part.text ?? "")
-    .join("\n") ?? "{}";
+  const content =
+    json?.candidates?.[0]?.content?.parts
+      ?.map((part: { text?: string }) => part.text ?? "")
+      .join("\n") ?? "{}";
   const parsed = extractJsonObject(content);
   return Object.keys(parsed).length > 0 ? parsed : null;
 }
