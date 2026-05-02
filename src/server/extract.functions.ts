@@ -57,7 +57,7 @@ export const extractCourseData = createServerFn({ method: "POST" })
         },
         body: JSON.stringify({
           // موديل رؤية مجاني على OpenRouter يدعم الصور
-          model: "google/gemini-2.0-flash-exp:free",
+          model: "meta-llama/llama-3.2-11b-vision-instruct:free",
           messages: [
             { role: "system", content: systemPrompt },
             {
