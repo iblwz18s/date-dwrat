@@ -538,7 +538,7 @@ function CourseDetails({
 }: {
   course: CourseEvent;
   imageDataUrl?: string;
-  onAddToCalendar: () => void;
+  onAddToCalendar: (type: "google" | "device") => void;
 }) {
   return (
     <div className="space-y-4">
@@ -552,11 +552,18 @@ function CourseDetails({
       <CourseFields course={course} />
       <div className="flex flex-wrap gap-2 pt-2">
         <button
-          onClick={onAddToCalendar}
+          onClick={() => onAddToCalendar("google")}
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-elegant"
         >
           <CalendarPlus className="h-4 w-4" />
-          إضافة إلى التقويم
+          Google Calendar
+        </button>
+        <button
+          onClick={() => onAddToCalendar("device")}
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 text-sm font-bold text-foreground hover:bg-primary/20"
+        >
+          <Smartphone className="h-4 w-4" />
+          تقويم الجهاز
         </button>
         {course.registrationUrl && (
           <a
