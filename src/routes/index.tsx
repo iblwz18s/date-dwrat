@@ -185,8 +185,8 @@ function Index() {
         )}
 
         <footer className="mt-16 flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
-          <Bell className="h-4 w-4" />
-          <span>صُنع بحب — تذكير تلقائي قبل بدء الدورة بنصف ساعة</span>
+          <Sparkles className="h-4 w-4 text-primary" />
+          <span>تطوير الأستاذ أسامة البلوي</span>
         </footer>
       </div>
     </main>
