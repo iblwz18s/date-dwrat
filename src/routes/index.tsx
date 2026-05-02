@@ -184,8 +184,9 @@ function Index() {
           </Modal>
         )}
 
-        <footer className="mt-16 text-center text-sm text-muted-foreground">
-          صُنع بحب — تذكير تلقائي قبل بدء الدورة بنصف ساعة ⏰
+        <footer className="mt-16 flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+          <Bell className="h-4 w-4" />
+          <span>صُنع بحب — تذكير تلقائي قبل بدء الدورة بنصف ساعة</span>
         </footer>
       </div>
     </main>
@@ -197,14 +198,15 @@ function Header() {
     <header className="text-center">
       <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-1.5 text-xs font-medium text-muted-foreground shadow-soft">
         <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+        <Sparkles className="h-3.5 w-3.5 text-primary" />
         مدعوم بالذكاء الاصطناعي
       </div>
-      <h1 className="mt-5 text-4xl font-extrabold tracking-tight md:text-6xl">
+      <h1 className="font-display mt-6 text-4xl font-black tracking-tight md:text-6xl">
         <span className="bg-gradient-primary bg-clip-text text-transparent">
           مستخرج بيانات الدورات الذكي
         </span>
       </h1>
-      <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground md:text-lg">
+      <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
         ارفع صورة ملصق دورة أو ورشة أو مناقشة علمية، نستخرج التفاصيل تلقائياً —
         ثم نضيفها لتقويمك مع تذكير قبل البداية بنصف ساعة.
       </p>
