@@ -52,12 +52,56 @@ function getProviderErrorText(body: string): string {
   return body.slice(0, 240);
 }
 
+async function extractWithGeminiDirect(
+  apiKey: string,
+  imageBase64: string,
+  mimeType: string,
+  prompt: string,
+): Promise<ExtractedCourseFields | null> {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: prompt },
+              { inlineData: { mimeType, data: imageBase64 } },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0,
+          maxOutputTokens: 700,
+          responseMimeType: "application/json",
+        },
+      }),
+    },
+  );
+
+  if (!res.ok) {
+    console.error("Gemini direct extraction failed:", res.status, (await res.text()).slice(0, 240));
+    return null;
+  }
+
+  const json = await res.json();
+  const content = json?.candidates?.[0]?.content?.parts
+    ?.map((part: { text?: string }) => part.text ?? "")
+    .join("\n") ?? "{}";
+  const parsed = extractJsonObject(content);
+  return Object.keys(parsed).length > 0 ? parsed : null;
+}
+
 export const extractCourseData = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<ExtractResult> => {
     const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-      return { ok: false as const, error: "OPENROUTER_API_KEY غير مهيأ" };
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey && !geminiApiKey) {
+      return { ok: false as const, error: "مفتاح الذكاء الاصطناعي غير مهيأ" };
     }
 
     const systemPrompt = `أنت مساعد ذكي متخصص في استخراج بيانات الدورات التدريبية وورش العمل والمناقشات العلمية من صور الملصقات الإعلانية باللغة العربية والإنجليزية. استخرج البيانات بدقة وأرجعها بصيغة JSON فقط بدون أي نص إضافي.`;
@@ -80,7 +124,7 @@ export const extractCourseData = createServerFn({ method: "POST" })
       const imageUrl = `data:${data.mimeType};base64,${data.imageBase64}`;
       const errors: string[] = [];
 
-      for (const model of FREE_VISION_MODELS) {
+      for (const model of apiKey ? FREE_VISION_MODELS : []) {
         const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -124,6 +168,18 @@ export const extractCourseData = createServerFn({ method: "POST" })
           return { ok: true as const, data: parsed };
         }
         errors.push(`${model}: empty response`);
+      }
+
+      if (geminiApiKey) {
+        const directGeminiResult = await extractWithGeminiDirect(
+          geminiApiKey,
+          data.imageBase64,
+          data.mimeType,
+          `${systemPrompt}\n\n${userPrompt}`,
+        );
+        if (directGeminiResult) {
+          return { ok: true as const, data: directGeminiResult };
+        }
       }
 
       console.error("OpenRouter extraction failed for all models:", errors);
