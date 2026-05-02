@@ -20,10 +20,11 @@ export interface ExtractedCourseFields {
 type ExtractResult = { ok: true; data: ExtractedCourseFields } | { ok: false; error: string };
 
 const FREE_VISION_MODELS = [
-  "google/gemma-3-12b-it:free",
-  "google/gemma-3-4b-it:free",
-  "google/gemma-3-27b-it:free",
+  "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+  "google/gemma-4-26b-a4b-it:free",
+  "google/gemma-4-31b-it:free",
   "nvidia/nemotron-nano-12b-v2-vl:free",
+  "google/gemma-3-12b-it:free",
   "baidu/qianfan-ocr-fast:free",
 ];
 
@@ -36,6 +37,19 @@ function extractJsonObject(content: string): ExtractedCourseFields {
     if (!match) return {};
     return JSON.parse(match[0]) as ExtractedCourseFields;
   }
+}
+
+function getProviderErrorText(body: string): string {
+  try {
+    const parsed = JSON.parse(body);
+    const raw = parsed?.error?.metadata?.raw;
+    if (typeof raw === "string") return raw.slice(0, 240);
+    const message = parsed?.error?.message;
+    if (typeof message === "string") return message.slice(0, 240);
+  } catch {
+    // keep the original response text below
+  }
+  return body.slice(0, 240);
 }
 
 export const extractCourseData = createServerFn({ method: "POST" })
@@ -95,7 +109,11 @@ export const extractCourseData = createServerFn({ method: "POST" })
         if (!res.ok) {
           const txt = await res.text();
           if (res.status === 401) return { ok: false as const, error: "مفتاح OpenRouter غير صالح" };
-          errors.push(`${model}: ${res.status} ${txt.slice(0, 120)}`);
+          if (res.status === 404 || res.status === 410) {
+            errors.push(`${model}: النموذج غير متاح حالياً (${res.status})`);
+          } else {
+            errors.push(`${model}: ${res.status} ${getProviderErrorText(txt)}`);
+          }
           continue;
         }
 
