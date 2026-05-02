@@ -24,54 +24,68 @@ type ExtractResult =
 export const extractCourseData = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<ExtractResult> => {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
-      return { ok: false as const, error: "GEMINI_API_KEY غير مهيأ" };
+      return { ok: false as const, error: "OPENROUTER_API_KEY غير مهيأ" };
     }
 
-    const systemPrompt = `أنت مساعد ذكي متخصص في استخراج بيانات الدورات التدريبية وورش العمل والمناقشات العلمية من صور الملصقات الإعلانية باللغة العربية والإنجليزية. استخرج البيانات بدقة وأرجعها بصيغة JSON فقط.`;
+    const systemPrompt = `أنت مساعد ذكي متخصص في استخراج بيانات الدورات التدريبية وورش العمل والمناقشات العلمية من صور الملصقات الإعلانية باللغة العربية والإنجليزية. استخرج البيانات بدقة وأرجعها بصيغة JSON فقط بدون أي نص إضافي.`;
 
-    const userPrompt = `حلل صورة الملصق واستخرج البيانات التالية بصيغة JSON:
-- title: عنوان الدورة/الورشة/المناقشة
-- date: التاريخ بصيغة YYYY-MM-DD (حوّل التواريخ الهجرية للميلادية إن أمكن)
-- startTime: وقت البدء بصيغة HH:MM (24h)
-- endTime: وقت الانتهاء بصيغة HH:MM (24h). إن لم يُذكر، أضف ساعة واحدة على وقت البدء
-- organizer: الجهة المنظمة
-- location: مكان الانعقاد (أو "عبر الإنترنت" إن كانت أونلاين)
-- description: وصف مختصر إن وُجد
-- registrationUrl: رابط التسجيل إن وُجد نصياً
+    const userPrompt = `حلل صورة الملصق واستخرج البيانات التالية بصيغة JSON فقط:
+{
+  "title": "عنوان الدورة/الورشة/المناقشة",
+  "date": "التاريخ بصيغة YYYY-MM-DD (حوّل التواريخ الهجرية للميلادية إن أمكن)",
+  "startTime": "وقت البدء بصيغة HH:MM (24h)",
+  "endTime": "وقت الانتهاء بصيغة HH:MM (24h). إن لم يُذكر، أضف ساعة واحدة على وقت البدء",
+  "organizer": "الجهة المنظمة",
+  "location": "مكان الانعقاد (أو عبر الإنترنت إن كانت أونلاين)",
+  "description": "وصف مختصر إن وُجد",
+  "registrationUrl": "رابط التسجيل إن وُجد نصياً"
+}
 
-أرجع JSON فقط بدون أي نص إضافي. استخدم null للحقول غير المتوفرة.`;
+استخدم null للحقول غير المتوفرة. أرجع JSON فقط بدون أي نص أو تعليق إضافي وبدون علامات markdown.`;
 
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-      const res = await fetch(url, {
+      const dataUrl = `data:${data.mimeType};base64,${data.imageBase64}`;
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+          "HTTP-Referer": "https://lovable.dev",
+          "X-Title": "Smart Course Extractor",
+        },
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          contents: [
+          // موديل رؤية مجاني على OpenRouter يدعم الصور
+          model: "google/gemini-2.0-flash-exp:free",
+          messages: [
+            { role: "system", content: systemPrompt },
             {
               role: "user",
-              parts: [
-                { text: userPrompt },
-                { inline_data: { mime_type: data.mimeType, data: data.imageBase64 } },
+              content: [
+                { type: "text", text: userPrompt },
+                { type: "image_url", image_url: { url: dataUrl } },
               ],
             },
           ],
-          generationConfig: { responseMimeType: "application/json" },
+          response_format: { type: "json_object" },
         }),
       });
 
       if (!res.ok) {
         const txt = await res.text();
-        if (res.status === 429) return { ok: false as const, error: "تم تجاوز الحد المجاني اليومي. حاول غداً." };
+        if (res.status === 429) {
+          return { ok: false as const, error: "تم تجاوز الحد المجاني المؤقت. حاول بعد قليل." };
+        }
+        if (res.status === 401) {
+          return { ok: false as const, error: "مفتاح OpenRouter غير صالح" };
+        }
         return { ok: false as const, error: `فشل الاستخراج (${res.status}): ${txt.slice(0, 200)}` };
       }
 
       const json = await res.json();
-      const content =
-        json?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "{}";
+      const content: string = json?.choices?.[0]?.message?.content ?? "{}";
+
       let parsed: ExtractedCourseFields = {};
       try {
         parsed = JSON.parse(content) as ExtractedCourseFields;
