@@ -6,8 +6,19 @@ const InputSchema = z.object({
   mimeType: z.string().default("image/jpeg"),
 });
 
+export interface ExtractedCourseFields {
+  title?: string | null;
+  date?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  organizer?: string | null;
+  location?: string | null;
+  description?: string | null;
+  registrationUrl?: string | null;
+}
+
 type ExtractResult =
-  | { ok: true; data: Record<string, unknown> }
+  | { ok: true; data: ExtractedCourseFields }
   | { ok: false; error: string };
 
 export const extractCourseData = createServerFn({ method: "POST" })
