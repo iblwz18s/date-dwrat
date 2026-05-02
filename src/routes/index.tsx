@@ -432,7 +432,7 @@ function SavedList({
   courses: SavedCourse[];
   onView: (c: SavedCourse) => void;
   onDelete: (id: string) => void;
-  onAddToCalendar: (c: CourseEvent) => void;
+  onAddToCalendar: (c: CourseEvent, type?: "google" | "device") => void;
 }) {
   if (courses.length === 0) return null;
   return (
