@@ -21,6 +21,25 @@ type ExtractResult =
   | { ok: true; data: ExtractedCourseFields }
   | { ok: false; error: string };
 
+const FREE_VISION_MODELS = [
+  "google/gemma-3-12b-it:free",
+  "google/gemma-3-4b-it:free",
+  "google/gemma-3-27b-it:free",
+  "nvidia/nemotron-nano-12b-v2-vl:free",
+  "baidu/qianfan-ocr-fast:free",
+];
+
+function extractJsonObject(content: string): ExtractedCourseFields {
+  const cleaned = content.replace(/```json|```/g, "").trim();
+  try {
+    return JSON.parse(cleaned) as ExtractedCourseFields;
+  } catch {
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (!match) return {};
+    return JSON.parse(match[0]) as ExtractedCourseFields;
+  }
+}
+
 export const extractCourseData = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<ExtractResult> => {
@@ -46,54 +65,53 @@ export const extractCourseData = createServerFn({ method: "POST" })
 استخدم null للحقول غير المتوفرة. أرجع JSON فقط بدون أي نص أو تعليق إضافي وبدون علامات markdown.`;
 
     try {
-      const dataUrl = `data:${data.mimeType};base64,${data.imageBase64}`;
-      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-          "HTTP-Referer": "https://lovable.dev",
-          "X-Title": "Smart Course Extractor",
-        },
-        body: JSON.stringify({
-          // موديل رؤية مجاني على OpenRouter يدعم الصور
-          model: "meta-llama/llama-3.2-11b-vision-instruct:free",
-          messages: [
-            { role: "system", content: systemPrompt },
-            {
-              role: "user",
-              content: [
-                { type: "text", text: userPrompt },
-                { type: "image_url", image_url: { url: dataUrl } },
-              ],
-            },
-          ],
-          response_format: { type: "json_object" },
-        }),
-      });
+      const imageUrl = `data:${data.mimeType};base64,${data.imageBase64}`;
+      const errors: string[] = [];
 
-      if (!res.ok) {
-        const txt = await res.text();
-        if (res.status === 429) {
-          return { ok: false as const, error: "تم تجاوز الحد المجاني المؤقت. حاول بعد قليل." };
+      for (const model of FREE_VISION_MODELS) {
+        const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+            "HTTP-Referer": "https://lovable.dev",
+            "X-Title": "Smart Course Extractor",
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: systemPrompt },
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: userPrompt },
+                  { type: "image_url", image_url: { url: imageUrl } },
+                ],
+              },
+            ],
+            temperature: 0,
+            max_tokens: 700,
+          }),
+        });
+
+        if (!res.ok) {
+          const txt = await res.text();
+          if (res.status === 401) return { ok: false as const, error: "مفتاح OpenRouter غير صالح" };
+          errors.push(`${model}: ${res.status} ${txt.slice(0, 120)}`);
+          continue;
         }
-        if (res.status === 401) {
-          return { ok: false as const, error: "مفتاح OpenRouter غير صالح" };
+
+        const json = await res.json();
+        const content: string = json?.choices?.[0]?.message?.content ?? "{}";
+        const parsed = extractJsonObject(content);
+        if (Object.keys(parsed).length > 0) {
+          return { ok: true as const, data: parsed };
         }
-        return { ok: false as const, error: `فشل الاستخراج (${res.status}): ${txt.slice(0, 200)}` };
+        errors.push(`${model}: empty response`);
       }
 
-      const json = await res.json();
-      const content: string = json?.choices?.[0]?.message?.content ?? "{}";
-
-      let parsed: ExtractedCourseFields = {};
-      try {
-        parsed = JSON.parse(content) as ExtractedCourseFields;
-      } catch {
-        const m = content.match(/\{[\s\S]*\}/);
-        if (m) parsed = JSON.parse(m[0]) as ExtractedCourseFields;
-      }
-      return { ok: true as const, data: parsed };
+      console.error("OpenRouter extraction failed for all models:", errors);
+      return { ok: false as const, error: "تعذّر استخراج البيانات عبر النماذج المجانية حالياً. حاول بصورة أوضح أو بعد قليل." };
     } catch (err) {
       console.error("extractCourseData error:", err);
       return { ok: false as const, error: "حدث خطأ أثناء الاتصال بخدمة الذكاء الاصطناعي" };
