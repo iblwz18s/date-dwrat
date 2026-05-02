@@ -20,10 +20,11 @@ export interface ExtractedCourseFields {
 type ExtractResult = { ok: true; data: ExtractedCourseFields } | { ok: false; error: string };
 
 const FREE_VISION_MODELS = [
-  "google/gemma-3-12b-it:free",
-  "google/gemma-3-4b-it:free",
-  "google/gemma-3-27b-it:free",
+  "google/gemma-4-26b-a4b-it:free",
+  "google/gemma-4-31b-it:free",
+  "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
   "nvidia/nemotron-nano-12b-v2-vl:free",
+  "google/gemma-3-12b-it:free",
   "baidu/qianfan-ocr-fast:free",
 ];
 
@@ -38,12 +39,67 @@ function extractJsonObject(content: string): ExtractedCourseFields {
   }
 }
 
+function getProviderErrorText(body: string): string {
+  try {
+    const parsed = JSON.parse(body);
+    const raw = parsed?.error?.metadata?.raw;
+    if (typeof raw === "string") return raw.slice(0, 240);
+    const message = parsed?.error?.message;
+    if (typeof message === "string") return message.slice(0, 240);
+  } catch {
+    // keep the original response text below
+  }
+  return body.slice(0, 240);
+}
+
+async function extractWithGeminiDirect(
+  apiKey: string,
+  imageBase64: string,
+  mimeType: string,
+  prompt: string,
+): Promise<ExtractedCourseFields | null> {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt }, { inlineData: { mimeType, data: imageBase64 } }],
+          },
+        ],
+        generationConfig: {
+          temperature: 0,
+          maxOutputTokens: 700,
+          responseMimeType: "application/json",
+        },
+      }),
+    },
+  );
+
+  if (!res.ok) {
+    console.error("Gemini direct extraction failed:", res.status, (await res.text()).slice(0, 240));
+    return null;
+  }
+
+  const json = await res.json();
+  const content =
+    json?.candidates?.[0]?.content?.parts
+      ?.map((part: { text?: string }) => part.text ?? "")
+      .join("\n") ?? "{}";
+  const parsed = extractJsonObject(content);
+  return Object.keys(parsed).length > 0 ? parsed : null;
+}
+
 export const extractCourseData = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<ExtractResult> => {
     const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-      return { ok: false as const, error: "OPENROUTER_API_KEY غير مهيأ" };
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey && !geminiApiKey) {
+      return { ok: false as const, error: "مفتاح الذكاء الاصطناعي غير مهيأ" };
     }
 
     const systemPrompt = `أنت مساعد ذكي متخصص في استخراج بيانات الدورات التدريبية وورش العمل والمناقشات العلمية من صور الملصقات الإعلانية باللغة العربية والإنجليزية. استخرج البيانات بدقة وأرجعها بصيغة JSON فقط بدون أي نص إضافي.`;
@@ -66,7 +122,7 @@ export const extractCourseData = createServerFn({ method: "POST" })
       const imageUrl = `data:${data.mimeType};base64,${data.imageBase64}`;
       const errors: string[] = [];
 
-      for (const model of FREE_VISION_MODELS) {
+      for (const model of apiKey ? FREE_VISION_MODELS : []) {
         const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -95,7 +151,11 @@ export const extractCourseData = createServerFn({ method: "POST" })
         if (!res.ok) {
           const txt = await res.text();
           if (res.status === 401) return { ok: false as const, error: "مفتاح OpenRouter غير صالح" };
-          errors.push(`${model}: ${res.status} ${txt.slice(0, 120)}`);
+          if (res.status === 404 || res.status === 410) {
+            errors.push(`${model}: النموذج غير متاح حالياً (${res.status})`);
+          } else {
+            errors.push(`${model}: ${res.status} ${getProviderErrorText(txt)}`);
+          }
           continue;
         }
 
@@ -108,10 +168,22 @@ export const extractCourseData = createServerFn({ method: "POST" })
         errors.push(`${model}: empty response`);
       }
 
-      console.error("OpenRouter extraction failed for all models:", errors);
+      if (geminiApiKey) {
+        const directGeminiResult = await extractWithGeminiDirect(
+          geminiApiKey,
+          data.imageBase64,
+          data.mimeType,
+          `${systemPrompt}\n\n${userPrompt}`,
+        );
+        if (directGeminiResult) {
+          return { ok: true as const, data: directGeminiResult };
+        }
+      }
+
+      console.error("AI extraction failed for all providers:", errors);
       return {
         ok: false as const,
-        error: "تعذّر استخراج البيانات عبر النماذج المجانية حالياً. حاول بصورة أوضح أو بعد قليل.",
+        error: "تعذّر استخراج البيانات عبر الخدمات المجانية حالياً. حاول بصورة أوضح أو بعد قليل.",
       };
     } catch (err) {
       console.error("extractCourseData error:", err);

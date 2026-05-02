@@ -32,14 +32,39 @@ export async function scanQrFromImage(file: File): Promise<string | null> {
 
 export async function fileToBase64(file: File): Promise<{ base64: string; mimeType: string }> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      const [meta, base64] = result.split(",");
-      const mimeMatch = meta.match(/data:([^;]+);/);
-      resolve({ base64, mimeType: mimeMatch?.[1] ?? file.type ?? "image/jpeg" });
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        const maxDim = 1200;
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.min(maxDim / width, maxDim / height);
+          width = Math.floor(width * ratio);
+          height = Math.floor(height * ratio);
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("تعذر تجهيز الصورة");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const result = canvas.toDataURL("image/jpeg", 0.82);
+        resolve({ base64: result.split(",")[1], mimeType: "image/jpeg" });
+      } catch (error) {
+        reject(error);
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
     };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("تعذر قراءة الصورة"));
+    };
+    img.src = objectUrl;
   });
 }
