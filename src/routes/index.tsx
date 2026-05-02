@@ -17,6 +17,7 @@ import {
   Building2,
   AlignLeft,
   Bell,
+  Smartphone,
 } from "lucide-react";
 import { extractCourseData } from "@/server/extract.functions";
 import { fileToBase64, scanQrFromImage } from "@/lib/qr";
@@ -130,12 +131,11 @@ function Index() {
     await refreshSaved();
   };
 
-  const handleAddToCalendar = (ev: CourseEvent) => {
-    const url = buildGoogleCalendarUrl(ev);
-    if (isMobileDevice()) {
-      // على الجوال: نزّل ملف ICS ليُفتح في تقويم الجهاز
+  const handleAddToCalendar = (ev: CourseEvent, type: "google" | "device" = "google") => {
+    if (type === "device") {
       downloadIcs(ev);
     } else {
+      const url = buildGoogleCalendarUrl(ev);
       window.open(url, "_blank", "noopener,noreferrer");
     }
   };
@@ -179,14 +179,14 @@ function Index() {
             <CourseDetails
               course={viewing}
               imageDataUrl={viewing.imageDataUrl}
-              onAddToCalendar={() => handleAddToCalendar(viewing)}
+              onAddToCalendar={(type) => handleAddToCalendar(viewing, type)}
             />
           </Modal>
         )}
 
         <footer className="mt-16 flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
-          <Bell className="h-4 w-4" />
-          <span>صُنع بحب — تذكير تلقائي قبل بدء الدورة بنصف ساعة</span>
+          <Sparkles className="h-4 w-4 text-primary" />
+          <span>تطوير الأستاذ أسامة البلوي</span>
         </footer>
       </div>
     </main>
@@ -201,8 +201,8 @@ function Header() {
         <Sparkles className="h-3.5 w-3.5 text-primary" />
         مدعوم بالذكاء الاصطناعي
       </div>
-      <h1 className="font-display mt-6 text-4xl font-black tracking-tight md:text-6xl">
-        <span className="bg-gradient-primary bg-clip-text text-transparent">
+      <h1 className="font-display mt-6 text-4xl font-black leading-[1.4] tracking-tight md:text-6xl md:leading-[1.3] pb-2">
+        <span className="bg-gradient-primary bg-clip-text text-transparent inline-block py-1">
           مستخرج بيانات الدورات الذكي
         </span>
       </h1>
@@ -322,7 +322,7 @@ function ResultPanel({
   loading: boolean;
   course: CourseEvent | null;
   onSave: () => void;
-  onAddToCalendar: (c: CourseEvent) => void;
+  onAddToCalendar: (c: CourseEvent, type?: "google" | "device") => void;
 }) {
   return (
     <div className="glass rounded-2xl border border-border p-5 shadow-soft">
@@ -346,11 +346,18 @@ function ResultPanel({
           <CourseFields course={course} />
           <div className="flex flex-wrap gap-2 pt-2">
             <button
-              onClick={() => onAddToCalendar(course)}
+              onClick={() => onAddToCalendar(course, "google")}
               className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-elegant hover:opacity-95"
             >
               <CalendarPlus className="h-4 w-4" />
-              إضافة إلى التقويم
+              Google Calendar
+            </button>
+            <button
+              onClick={() => onAddToCalendar(course, "device")}
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 text-sm font-bold text-foreground hover:bg-primary/20"
+            >
+              <Smartphone className="h-4 w-4" />
+              تقويم الجهاز
             </button>
             <button
               onClick={onSave}
@@ -425,7 +432,7 @@ function SavedList({
   courses: SavedCourse[];
   onView: (c: SavedCourse) => void;
   onDelete: (id: string) => void;
-  onAddToCalendar: (c: CourseEvent) => void;
+  onAddToCalendar: (c: CourseEvent, type?: "google" | "device") => void;
 }) {
   if (courses.length === 0) return null;
   return (
@@ -463,11 +470,20 @@ function SavedList({
               </p>
               <div className="flex flex-wrap gap-2 pt-2">
                 <button
-                  onClick={() => onAddToCalendar(c)}
+                  onClick={() => onAddToCalendar(c, "google")}
                   className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gradient-primary px-3 py-2 text-xs font-bold text-primary-foreground"
+                  aria-label="Google Calendar"
                 >
                   <CalendarPlus className="h-3.5 w-3.5" />
-                  إضافة للتقويم
+                  Google
+                </button>
+                <button
+                  onClick={() => onAddToCalendar(c, "device")}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-xs font-bold text-foreground hover:bg-primary/20"
+                  aria-label="تقويم الجهاز"
+                >
+                  <Smartphone className="h-3.5 w-3.5" />
+                  الجهاز
                 </button>
                 <button
                   onClick={() => onView(c)}
@@ -522,7 +538,7 @@ function CourseDetails({
 }: {
   course: CourseEvent;
   imageDataUrl?: string;
-  onAddToCalendar: () => void;
+  onAddToCalendar: (type: "google" | "device") => void;
 }) {
   return (
     <div className="space-y-4">
@@ -536,11 +552,18 @@ function CourseDetails({
       <CourseFields course={course} />
       <div className="flex flex-wrap gap-2 pt-2">
         <button
-          onClick={onAddToCalendar}
+          onClick={() => onAddToCalendar("google")}
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-elegant"
         >
           <CalendarPlus className="h-4 w-4" />
-          إضافة إلى التقويم
+          Google Calendar
+        </button>
+        <button
+          onClick={() => onAddToCalendar("device")}
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 text-sm font-bold text-foreground hover:bg-primary/20"
+        >
+          <Smartphone className="h-4 w-4" />
+          تقويم الجهاز
         </button>
         {course.registrationUrl && (
           <a
