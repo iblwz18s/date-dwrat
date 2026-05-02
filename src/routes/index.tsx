@@ -1,6 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import {
+  Sparkles,
+  UploadCloud,
+  CalendarPlus,
+  Bookmark,
+  ExternalLink,
+  Trash2,
+  Eye,
+  X,
+  ClipboardList,
+  Calendar as CalendarIcon,
+  Clock,
+  MapPin,
+  Building2,
+  AlignLeft,
+  Bell,
+} from "lucide-react";
 import { extractCourseData } from "@/server/extract.functions";
 import { fileToBase64, scanQrFromImage } from "@/lib/qr";
 import {
