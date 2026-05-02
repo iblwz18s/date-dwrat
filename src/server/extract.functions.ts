@@ -17,9 +17,7 @@ export interface ExtractedCourseFields {
   registrationUrl?: string | null;
 }
 
-type ExtractResult =
-  | { ok: true; data: ExtractedCourseFields }
-  | { ok: false; error: string };
+type ExtractResult = { ok: true; data: ExtractedCourseFields } | { ok: false; error: string };
 
 const FREE_VISION_MODELS = [
   "google/gemma-3-12b-it:free",
@@ -111,7 +109,10 @@ export const extractCourseData = createServerFn({ method: "POST" })
       }
 
       console.error("OpenRouter extraction failed for all models:", errors);
-      return { ok: false as const, error: "تعذّر استخراج البيانات عبر النماذج المجانية حالياً. حاول بصورة أوضح أو بعد قليل." };
+      return {
+        ok: false as const,
+        error: "تعذّر استخراج البيانات عبر النماذج المجانية حالياً. حاول بصورة أوضح أو بعد قليل.",
+      };
     } catch (err) {
       console.error("extractCourseData error:", err);
       return { ok: false as const, error: "حدث خطأ أثناء الاتصال بخدمة الذكاء الاصطناعي" };
