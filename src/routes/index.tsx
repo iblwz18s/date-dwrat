@@ -184,10 +184,6 @@ function Index() {
           </Modal>
         )}
 
-        <footer className="mt-16 flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <span>تطوير الأستاذ أسامة البلوي</span>
-        </footer>
       </div>
     </main>
   );
