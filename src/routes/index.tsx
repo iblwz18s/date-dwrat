@@ -184,10 +184,6 @@ function Index() {
           </Modal>
         )}
 
-        <footer className="mt-16 flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <span>تطوير الأستاذ أسامة البلوي</span>
-        </footer>
       </div>
     </main>
   );
@@ -201,6 +197,10 @@ function Header() {
         <Sparkles className="h-3.5 w-3.5 text-primary" />
         مدعوم بالذكاء الاصطناعي
       </div>
+      <p className="mt-3 flex items-center justify-center gap-1.5 text-sm font-medium text-muted-foreground">
+        <Sparkles className="h-3.5 w-3.5 text-primary" />
+        تطوير الأستاذ أسامة البلوي
+      </p>
       <h1 className="font-display mt-6 text-4xl font-black leading-[1.4] tracking-tight md:text-6xl md:leading-[1.3] pb-2">
         <span className="bg-gradient-primary bg-clip-text text-transparent inline-block py-1">
           مستخرج بيانات الدورات الذكي
