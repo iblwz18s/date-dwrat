@@ -1,0 +1,41 @@
+workflows:
+  ios-unsigned-ipa:
+    name: iOS Unsigned IPA (Capacitor + Sideloadly)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      node: 20
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install
+      - name: Sync Capacitor iOS
+        script: |
+          npx cap sync ios
+      - name: Install CocoaPods
+        script: |
+          cd ios/App
+          pod install
+      - name: Build unsigned .ipa
+        script: |
+          cd ios/App
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath $CM_BUILD_DIR/App.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            archive
+          mkdir -p $CM_BUILD_DIR/Payload
+          cp -r $CM_BUILD_DIR/App.xcarchive/Products/Applications/App.app $CM_BUILD_DIR/Payload/
+          cd $CM_BUILD_DIR
+          zip -qr App.ipa Payload
+          rm -rf Payload
+    artifacts:
+      - $CM_BUILD_DIR/App.ipa
+      - $CM_BUILD_DIR/App.xcarchive
