@@ -6,27 +6,27 @@ workflows:
     environment:
       node: 22.11.0
       xcode: latest
-      cocoapods: default
     scripts:
       - name: Install dependencies
         script: |
           npm install
+      - name: Build web assets
+        script: |
+          npm run build || echo "No build script or build failed; continuing (server.url is used)"
       - name: Sync Capacitor iOS
         script: |
           npx cap sync ios
-      - name: Install CocoaPods
-        script: |
-          cd ios/App
-          pod install
       - name: Build unsigned .ipa
         script: |
           cd ios/App
           xcodebuild \
-            -workspace App.xcworkspace \
+            -project App.xcodeproj \
             -scheme App \
             -configuration Release \
             -sdk iphoneos \
             -archivePath $CM_BUILD_DIR/App.xcarchive \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
