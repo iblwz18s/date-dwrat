@@ -18,6 +18,8 @@ import {
   AlignLeft,
   Bell,
   Smartphone,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { extractCourseData } from "@/server/extract.functions";
 import { fileToBase64, scanQrFromImage } from "@/lib/qr";
@@ -57,6 +59,25 @@ function Index() {
   const [saved, setSaved] = useState<SavedCourse[]>([]);
   const [viewing, setViewing] = useState<SavedCourse | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Dark mode
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("theme");
+    const prefersDark =
+      stored === "dark" ||
+      (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    setIsDark(prefersDark);
+    document.documentElement.classList.toggle("dark", prefersDark);
+  }, []);
+
+  const toggleDark = () => {
+    const next = !isDark;
+    setIsDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("theme", next ? "dark" : "light");
+  };
 
   const refreshSaved = useCallback(async () => {
     setSaved(await listCourses());
@@ -143,7 +164,7 @@ function Index() {
   return (
     <main className="min-h-screen px-4 py-10 md:py-16">
       <div className="mx-auto max-w-6xl">
-        <Header />
+        <Header isDark={isDark} onToggleDark={toggleDark} />
 
         <section className="mt-10 grid gap-6 md:grid-cols-2">
           <UploadPanel
@@ -189,9 +210,36 @@ function Index() {
   );
 }
 
-function Header() {
+function Header({
+  isDark,
+  onToggleDark,
+}: {
+  isDark: boolean;
+  onToggleDark: () => void;
+}) {
   return (
     <header className="text-center">
+      {/* Dark mode toggle */}
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={onToggleDark}
+          className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-2 text-sm font-medium text-muted-foreground shadow-soft transition-all hover:bg-card hover:text-foreground"
+          aria-label={isDark ? "تفعيل الوضع النهاري" : "تفعيل الوضع الليلي"}
+        >
+          {isDark ? (
+            <>
+              <Sun className="h-4 w-4 text-amber-500" />
+              <span>نهاري</span>
+            </>
+          ) : (
+            <>
+              <Moon className="h-4 w-4 text-indigo-500" />
+              <span>ليلي</span>
+            </>
+          )}
+        </button>
+      </div>
+
       <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-1.5 text-xs font-medium text-muted-foreground shadow-soft">
         <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
         <Sparkles className="h-3.5 w-3.5 text-primary" />
