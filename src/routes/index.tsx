@@ -21,7 +21,7 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import { extractCourseData } from "@/server/extract.functions";
+import { extractCourseData } from "@/lib/extract.functions";
 import { fileToBase64, scanQrFromImage } from "@/lib/qr";
 import {
   buildGoogleCalendarUrl,
