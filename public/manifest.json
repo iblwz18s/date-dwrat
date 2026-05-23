@@ -1,0 +1,26 @@
+{
+  "name": "مستخرج بيانات الدورات الذكي",
+  "short_name": "الدورات الذكي",
+  "description": "استخراج بيانات الدورات من الصور وإضافتها للتقويم بنقرة واحدة.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F6F7FF",
+  "theme_color": "#6B5CE7",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

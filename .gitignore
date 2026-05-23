@@ -25,6 +25,9 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .DS_Store
+
+# Local Claude Code tool configs
+.claude/
 *.suo
 *.ntvs*
 *.njsproj
