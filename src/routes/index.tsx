@@ -252,7 +252,7 @@ function Header({
         تطوير الأستاذ أسامة البلوي
       </p>
       <h1 className="font-display mt-6 font-black tracking-tight pb-2">
-        <span className="bg-gradient-primary bg-clip-text text-transparent block text-xl leading-tight sm:text-4xl sm:leading-[1.4] md:text-6xl md:leading-[1.3] py-1 truncate sm:whitespace-normal sm:overflow-visible">
+        <span className="bg-gradient-primary bg-clip-text text-transparent block text-3xl leading-tight sm:text-4xl sm:leading-[1.4] md:text-6xl md:leading-[1.3] py-1 whitespace-normal sm:overflow-visible">
           مستخرج بيانات الدورات الذكي
         </span>
       </h1>
