@@ -64,6 +64,7 @@ function Index() {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const stored = localStorage.getItem("theme");
     const prefersDark =
       stored === "dark" ||
@@ -73,6 +74,7 @@ function Index() {
   }, []);
 
   const toggleDark = () => {
+    if (typeof window === "undefined") return;
     const next = !isDark;
     setIsDark(next);
     document.documentElement.classList.toggle("dark", next);
